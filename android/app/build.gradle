@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.harshRajpurohit.we_chat"
+    namespace = "com.anuragsingh.we_chat"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.harshRajpurohit.we_chat"
+        applicationId = "com.anuragsingh.we_chat"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

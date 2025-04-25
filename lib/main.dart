@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_notification_channel/flutter_notification_channel.dart';
 import 'package:flutter_notification_channel/notification_importance.dart';
+import 'package:we_chat/screens/auth/login_screen.dart';
 
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
@@ -48,7 +49,7 @@ class MyApp extends StatelessWidget {
                   fontSize: 19),
               backgroundColor: Colors.white,
             )),
-        home: const SplashScreen());
+        home: const LoginScreen());
   }
 }
 

@@ -20,6 +20,9 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isAnimate = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLogin = true; // true: sign in, false: sign up
 
   @override
   void initState() {
@@ -57,6 +60,50 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  Future<void> _signInWithEmail() async {
+    Dialogs.showLoading(context);
+    try {
+      final userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      Navigator.pop(context); // Close loading dialog
+
+      if (await APIs.userExists() && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      Dialogs.showSnackbar(context, 'Sign In Failed: $e');
+    }
+  }
+
+  Future<void> _signUpWithEmail() async {
+    Dialogs.showLoading(context);
+    try {
+      final userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      await APIs.createUser();
+
+      Navigator.pop(context); // Close loading dialog
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } catch (e) {
+      Navigator.pop(context);
+      Dialogs.showSnackbar(context, 'Sign Up Failed: $e');
+    }
+  }
+
   Future<UserCredential?> _signInWithGoogle() async {
     try {
       await InternetAddress.lookup('google.com');
@@ -88,57 +135,150 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    //initializing media query (for getting device screen size)
     mq = MediaQuery.sizeOf(context);
 
     return Scaffold(
-      //app bar
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Welcome to We Chat'),
       ),
-
-      //body
-      body: Stack(children: [
-        //app logo
-        AnimatedPositioned(
-            top: mq.height * .15,
-            right: _isAnimate ? mq.width * .25 : -mq.width * .5,
-            width: mq.width * .5,
-            duration: const Duration(seconds: 1),
-            child: Image.asset('assets/images/icon.png')),
-
-        //google login button
-        Positioned(
-            bottom: mq.height * .15,
+      body: Stack(
+        children: [
+          AnimatedPositioned(
+              top: mq.height * .10,
+              right: _isAnimate ? mq.width * .25 : -mq.width * .5,
+              width: mq.width * .5,
+              duration: const Duration(seconds: 1),
+              child: Image.asset('assets/images/icon.png')),
+          Positioned(
+            top: mq.height * .4,
             left: mq.width * .05,
             width: mq.width * .9,
-            height: mq.height * .06,
-            child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 223, 255, 187),
-                    shape: const StadiumBorder(),
-                    elevation: 1),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
 
-                // on tap
-                onPressed: _handleGoogleBtnClick,
+                ElevatedButton(
+                  onPressed: () =>
+                      _isLogin ? _signInWithEmail() : _signUpWithEmail(),
+                  child: Text(_isLogin ? 'Sign In' : 'Sign Up'),
+                ),
 
-                //google icon
-                icon: Image.asset('assets/images/google.png',
-                    height: mq.height * .03),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isLogin = !_isLogin;
+                    });
+                  },
+                  child: Text(_isLogin
+                      ? "Don't have an account? Sign Up"
+                      : "Already have an account? Sign In"),
+                ),
 
-                //login with google label
-                label: RichText(
-                  text: const TextSpan(
+                const SizedBox(height: 10),
+
+                const Divider(thickness: 1),
+
+                const SizedBox(height: 10),
+
+                // Google Login Button
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 223, 255, 187),
+                      shape: const StadiumBorder(),
+                      elevation: 1),
+                  onPressed: _handleGoogleBtnClick,
+                  icon: Image.asset('assets/images/google.png',
+                      height: mq.height * .03),
+                  label: RichText(
+                    text: const TextSpan(
                       style: TextStyle(color: Colors.black, fontSize: 16),
                       children: [
                         TextSpan(text: 'Login with '),
                         TextSpan(
                             text: 'Google',
                             style: TextStyle(fontWeight: FontWeight.w500)),
-                      ]),
-                ))),
-      ]),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   //initializing media query (for getting device screen size)
+  //   mq = MediaQuery.sizeOf(context);
+
+  //   return Scaffold(
+  //     //app bar
+  //     appBar: AppBar(
+  //       automaticallyImplyLeading: false,
+  //       title: const Text('Welcome to We Chat'),
+  //     ),
+
+  //     //body
+  //     body: Stack(children: [
+  //       //app logo
+  //       AnimatedPositioned(
+  //           top: mq.height * .15,
+  //           right: _isAnimate ? mq.width * .25 : -mq.width * .5,
+  //           width: mq.width * .5,
+  //           duration: const Duration(seconds: 1),
+  //           child: Image.asset('assets/images/icon.png')),
+
+  //       //google login button
+  //       Positioned(
+  //           bottom: mq.height * .15,
+  //           left: mq.width * .05,
+  //           width: mq.width * .9,
+  //           height: mq.height * .06,
+  //           child: ElevatedButton.icon(
+  //               style: ElevatedButton.styleFrom(
+  //                   backgroundColor: const Color.fromARGB(255, 223, 255, 187),
+  //                   shape: const StadiumBorder(),
+  //                   elevation: 1),
+
+  //               // on tap
+  //               onPressed: _handleGoogleBtnClick,
+
+  //               //google icon
+  //               icon: Image.asset('assets/images/google.png',
+  //                   height: mq.height * .03),
+
+  //               //login with google label
+  //               label: RichText(
+  //                 text: const TextSpan(
+  //                     style: TextStyle(color: Colors.black, fontSize: 16),
+  //                     children: [
+  //                       TextSpan(text: 'Login with '),
+  //                       TextSpan(
+  //                           text: 'Google',
+  //                           style: TextStyle(fontWeight: FontWeight.w500)),
+  //                     ]),
+  //               ))),
+  //     ]),
+  //   );
+  // }
 }
